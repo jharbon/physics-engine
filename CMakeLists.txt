@@ -13,6 +13,17 @@ add_executable(physics_engine
     src/glad.c
 )
 
+add_executable(test_vec2
+    tests/test_vec2.cpp
+    src/Vec2.cpp
+)
+
+enable_testing()
+
+add_test(NAME Vec2Tests
+    COMMAND test_vec2
+)
+
 target_link_libraries(physics_engine
     OpenGL::GL
     glfw
