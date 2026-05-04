@@ -11,6 +11,8 @@ include_directories(include)
 add_executable(physics_engine
     src/main.cpp
     src/glad.c
+    src/Vec2.cpp
+    src/Particle.cpp
 )
 
 add_executable(test_vec2

@@ -1,8 +1,33 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+#include <Particle.hpp>
+#include <Vec2.hpp>
+
 #include <iostream>
+#include <chrono>
+
+using sc = std::chrono::steady_clock;
+
+constexpr float G_ACCEL = 9.81;  // m/s^2
+constexpr double SIM_DELTA_T = 1.0 / 60.0;  // s - corresponds to 60Hz 
+constexpr double FRAME_TIME_CLAMP = 0.25;  // s
+
+void update(
+        const double delta_t,
+        Particle& p
+);
+
+void render(
+        GLFWwindow* window,
+        unsigned int VAO,
+        unsigned int shaderProgram,
+        int offsetLoc,
+        const Particle& p
+);
 
 int main(int argc, char* argv[]) {
+    
     if (!glfwInit()) {
         std::cerr << "Failed to initialise GLFW" << std::endl;
         return -1;
@@ -35,8 +60,8 @@ int main(int argc, char* argv[]) {
 
     float vertices[] = {
         0.0f,  0.5f,   // top
-        -0.5f, -0.5f,   // bottom left
-        0.5f, -0.5f    // bottom right      
+        -0.25f, -0.25f,   // bottom left
+        0.25f, -0.25f    // bottom right      
     };
 
     // Generate and bind Vertex Array Object (intepret data) and Vertex Buffer Object (store data on GPU)
@@ -68,8 +93,10 @@ int main(int argc, char* argv[]) {
     #version 330 core
     layout (location = 0) in vec2 aPos;
 
+    uniform vec2 offset;
+
     void main() {
-        gl_Position = vec4(aPos, 0.0, 1.0);
+        gl_Position = vec4(aPos + offset, 0.0, 1.0);
     }
     )";
     // Shader to set pixel colour
@@ -100,25 +127,67 @@ int main(int argc, char* argv[]) {
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
+    int offsetLoc = glGetUniformLocation(shaderProgram, "offset");
+
+    Particle particle(Vec2(0, 0), Vec2(0.5, 5.0), Vec2(0, -G_ACCEL));
+    auto last = sc::now();
+    auto current = sc::now();
+    double frame_time;
+    double accumulator = 0.0;
 
     // Run main loop until window is closed
     while (!glfwWindowShouldClose(window)) {
         // Check for new events
         glfwPollEvents();
+        
+        current = sc::now();
+        frame_time = std::chrono::duration<double>(current - last).count();
+        last = current;
 
-        // Clear screen to RGBA colour
-        glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        // Clamp very large frame times which could occur due to stutter, user interaction, etc...
+        if (frame_time > FRAME_TIME_CLAMP) {
+            frame_time = FRAME_TIME_CLAMP;
+        }
 
-        // Use shader to draw triangle
-        glUseProgram(shaderProgram);
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        accumulator += frame_time;
 
-        // Display frame
-        glfwSwapBuffers(window);
+        while (accumulator >= SIM_DELTA_T) {
+            update(SIM_DELTA_T, particle);
+            accumulator -= SIM_DELTA_T;
+        }
+
+        render(window, VAO, shaderProgram, offsetLoc, particle);
     }
 
     glfwTerminate();
     return 0;
+}
+
+void update(
+        const double delta_t,
+        Particle& p
+) {
+    p.update(delta_t);
+}
+
+void render(
+        GLFWwindow* window,
+        unsigned int VAO,
+        unsigned int shaderProgram,
+        int offsetLoc,
+        const Particle& p
+) {
+    // Clear screen to RGBA colour
+    glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    Vec2 pos = p.get_pos();
+    // Use shader to draw triangle
+    glUseProgram(shaderProgram);
+    glUniform2f(offsetLoc, pos[0], pos[1]);
+    glBindVertexArray(VAO);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    // Display frame
+    glfwSwapBuffers(window);
 }
