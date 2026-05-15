@@ -9,9 +9,16 @@
 
 using sc = std::chrono::steady_clock;
 
+constexpr int WIN_WIDTH = 960;
+constexpr int WIN_HEIGHT = 540;
+
+constexpr float PARTICLE_RADIUS = 0.2;
 constexpr float G_ACCEL = 9.81;  // m/s^2
 constexpr double SIM_DELTA_T = 1.0 / 60.0;  // s - corresponds to 60Hz 
 constexpr double FRAME_TIME_CLAMP = 0.25;  // s
+
+void check_shader_compilation(const unsigned int shader, const char* name);
+void check_program_linking(const unsigned int program, const char* name);
 
 void update(
         const double delta_t,
@@ -23,6 +30,7 @@ void render(
         unsigned int VAO,
         unsigned int shaderProgram,
         int offsetLoc,
+        int resolutionLoc,
         const Particle& p
 );
 
@@ -34,8 +42,8 @@ int main(int argc, char* argv[]) {
     }
 
     GLFWwindow* window = glfwCreateWindow(
-        960,  // Width
-        540,  // Height
+        WIN_WIDTH,
+        WIN_HEIGHT,  
         "Physics Engine",  // Title
         NULL,  // Windowed mode
         NULL  // Do not share resources
@@ -57,14 +65,22 @@ int main(int argc, char* argv[]) {
     }
 
     std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
+    glViewport(0, 0, WIN_WIDTH, WIN_HEIGHT);
 
+    const float r = PARTICLE_RADIUS;
+    // Define quad with dimensions 2r x 2r using two triangles; this small local quad moves to particle position
     float vertices[] = {
-        0.0f,  0.5f,   // top
-        -0.25f, -0.25f,   // bottom left
-        0.25f, -0.25f    // bottom right      
+        // Vertices     // UVs
+        -r, -r,         0.0f, 0.0f,   
+         r, -r,         1.0f, 0.0f,    
+         r,  r,         1.0f, 1.0f,
+
+        -r, -r,         0.0f, 0.0f,
+         r,  r,         1.0f, 1.0f,
+        -r,  r,         0.0f, 1.0f
     };
 
-    // Generate and bind Vertex Array Object (intepret data) and Vertex Buffer Object (store data on GPU)
+    // Generate and bind Vertex Array Object (interpret data) and Vertex Buffer Object (store data on GPU)
     unsigned int VAO, VBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -77,37 +93,68 @@ int main(int argc, char* argv[]) {
         vertices,  // Pointer to CPU-side data 
         GL_STATIC_DRAW
     );
-    // Tell GPU how to interpret vertex data
+    // Tell GPU how to interpret position coordinates within each vertex
     glVertexAttribPointer(
         0,  // Attribute location (see shader)
-        2,  // Values per vertex (x,y)
+        2,  // Values per position (x,y)
         GL_FLOAT,  // Value type
         GL_FALSE,  // Do not normalise (values already in correct range)
-        2 * sizeof(float),  // Size of vertex
+        4 * sizeof(float),  // Size of vertex
         (void*)0  // Where attribute starts in buffer
     );
     glEnableVertexAttribArray(0);
+    // Tell GPU how to interpret UV coordinates within each vertex
+    glVertexAttribPointer(
+        1,  // Attribute location (see shader)
+        2,  // Values per UV (u,v)
+        GL_FLOAT,  // Value type
+        GL_FALSE,  // Do not normalise (values already in correct range)
+        4 * sizeof(float),  // Size of vertex
+        (void*)(2 * sizeof(float))  // Where attribute starts in buffer
+    );
+    glEnableVertexAttribArray(1);
 
-    // Shader to process positions
-    const char* vertexShaderSource = R"(
-    #version 330 core
-    layout (location = 0) in vec2 aPos;
+    // Shader to process vertices; runs once per vertex 
+    const char* vertexShaderSource = 
+        R"(#version 330 core
+        layout (location = 0) in vec2 aPos;
+        layout (location = 1) in vec2 aUV;
 
-    uniform vec2 offset;
+        uniform vec2 offset;
 
-    void main() {
-        gl_Position = vec4(aPos + offset, 0.0, 1.0);
-    }
-    )";
-    // Shader to set pixel colour
-    const char* fragmentShaderSource = R"(
-    #version 330 core
-    out vec4 FragColor;
+        out vec2 uv;
 
-    void main() {
-        FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-    }
-    )";
+        void main() {
+            uv = aUV;
+            gl_Position = vec4(aPos + offset, 0.0, 1.0);
+        }
+        )";
+
+    // Shader to process fragments; each pixel is a fragment and this runs once per fragment
+    const char* fragmentShaderSource = 
+        R"(#version 330 core
+        in vec2 uv;
+        out vec4 FragColor;
+
+        uniform vec2 resolution;
+
+        // Define radius in UV space such that coloured circle has radius equal to half the quad dimension 
+        const float radius = 0.5;
+        const vec2 centre = vec2(0.5, 0.5);
+
+        void main() {
+            // Find frag point relative to centre and scale according to aspect ratio
+            vec2 p = uv - centre;
+            p.x *= resolution.x / resolution.y;
+            float dist = length(p);
+
+            // Only colour fragments on circle
+            if (dist > radius)
+                discard;
+                
+            FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+        }
+        )";
 
     // Compile and link shaders:
 
@@ -115,21 +162,28 @@ int main(int argc, char* argv[]) {
     glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
     glCompileShader(vertexShader);
 
+    check_shader_compilation(vertexShader, "Vertex Shader");
+
     unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
     glCompileShader(fragmentShader);
+
+    check_shader_compilation(fragmentShader, "Fragment Shader");
 
     unsigned int shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
 
+    check_program_linking(shaderProgram, "Shader Program");
+
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
     int offsetLoc = glGetUniformLocation(shaderProgram, "offset");
+    int resolutionLoc = glGetUniformLocation(shaderProgram, "resolution");
 
-    Particle particle(Vec2(0, 0), Vec2(0.5, 5.0), Vec2(0, -G_ACCEL));
+    Particle particle(PARTICLE_RADIUS, 0.1, Vec2(0, 0), Vec2(0.25, 2.0), Vec2(0, -G_ACCEL / 5));
     auto last = sc::now();
     auto current = sc::now();
     double frame_time;
@@ -156,11 +210,41 @@ int main(int argc, char* argv[]) {
             accumulator -= SIM_DELTA_T;
         }
 
-        render(window, VAO, shaderProgram, offsetLoc, particle);
+        render(window, VAO, shaderProgram, offsetLoc, resolutionLoc, particle);
     }
 
     glfwTerminate();
     return 0;
+}
+
+void check_shader_compilation(
+        const unsigned int shader,
+        const char* name
+) {
+    int success;
+    char log[512];
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+
+    if (!success) {
+        std::cout << "Shader compilation info log for '" << name << "':\n";
+        glGetShaderInfoLog(shader, 512, NULL, log);
+        std::cerr << log << std::endl;
+    }
+}
+
+void check_program_linking(
+        const unsigned int program,
+        const char* name
+) {
+    int success;
+    char log[512];
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    
+    if (!success) {
+        std::cout << "Shader program linking info log for '" << name << "':\n";
+        glGetProgramInfoLog(program, 512, NULL, log);
+        std::cerr << log << std::endl;
+    }
 }
 
 void update(
@@ -175,6 +259,7 @@ void render(
         unsigned int VAO,
         unsigned int shaderProgram,
         int offsetLoc,
+        int resolutionLoc,
         const Particle& p
 ) {
     // Clear screen to RGBA colour
@@ -182,11 +267,12 @@ void render(
     glClear(GL_COLOR_BUFFER_BIT);
 
     Vec2 pos = p.get_pos();
-    // Use shader to draw triangle
+    // Render circle via mask applied to quad
     glUseProgram(shaderProgram);
     glUniform2f(offsetLoc, pos[0], pos[1]);
+    glUniform2f(resolutionLoc, WIN_WIDTH, WIN_HEIGHT);
     glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 
     // Display frame
     glfwSwapBuffers(window);
