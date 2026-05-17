@@ -14,7 +14,11 @@ void Particle::update(float delta_t) {
     this->vel += this->accel * delta_t;
 }
 
-Vec2 Particle::get_pos() const {
+float Particle::get_radius() const {
+    return this->radius;
+}
+
+const Vec2& Particle::get_pos() const {
     return this->pos;
 }
 
@@ -25,4 +29,11 @@ const Vec2& Particle::get_vel() const {
 const Vec2& Particle::get_accel() const {
     return this->accel;
 }
+
+void Particle::set_pos(const Vec2& p) {
+    this->pos = p;
+}
+
+void Particle::set_vel(const Vec2& v) {
+    this->vel = v;
 }

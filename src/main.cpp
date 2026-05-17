@@ -11,8 +11,11 @@ using sc = std::chrono::steady_clock;
 
 constexpr int WIN_WIDTH = 960;
 constexpr int WIN_HEIGHT = 540;
+// Define inverse of aspect ratio to scale NDC horizontal dimension when working with particle geometry
+constexpr float ASPECT = (float)WIN_HEIGHT / WIN_WIDTH;
 
-constexpr float PARTICLE_RADIUS = 0.2;
+constexpr float MASS = 0.1;
+constexpr float RADIUS = 0.2;
 constexpr float G_ACCEL = 9.81;  // m/s^2
 constexpr double SIM_DELTA_T = 1.0 / 60.0;  // s - corresponds to 60Hz 
 constexpr double FRAME_TIME_CLAMP = 0.25;  // s
@@ -30,7 +33,6 @@ void render(
         unsigned int VAO,
         unsigned int shaderProgram,
         int offsetLoc,
-        int resolutionLoc,
         const Particle& p
 );
 
@@ -67,17 +69,18 @@ int main(int argc, char* argv[]) {
     std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
     glViewport(0, 0, WIN_WIDTH, WIN_HEIGHT);
 
-    const float r = PARTICLE_RADIUS;
+    const float r = RADIUS;
+    const float r_asp = r * ASPECT;  // To account for horizontal stretch
     // Define quad with dimensions 2r x 2r using two triangles; this small local quad moves to particle position
     float vertices[] = {
-        // Vertices     // UVs
-        -r, -r,         0.0f, 0.0f,   
-         r, -r,         1.0f, 0.0f,    
-         r,  r,         1.0f, 1.0f,
+        // Vertices         // UVs
+        -r_asp, -r,         0.0f, 0.0f,   
+         r_asp, -r,         1.0f, 0.0f,    
+         r_asp,  r,         1.0f, 1.0f,
 
-        -r, -r,         0.0f, 0.0f,
-         r,  r,         1.0f, 1.0f,
-        -r,  r,         0.0f, 1.0f
+        -r_asp, -r,         0.0f, 0.0f,
+         r_asp,  r,         1.0f, 1.0f,
+        -r_asp,  r,         0.0f, 1.0f
     };
 
     // Generate and bind Vertex Array Object (interpret data) and Vertex Buffer Object (store data on GPU)
@@ -136,16 +139,13 @@ int main(int argc, char* argv[]) {
         in vec2 uv;
         out vec4 FragColor;
 
-        uniform vec2 resolution;
-
         // Define radius in UV space such that coloured circle has radius equal to half the quad dimension 
         const float radius = 0.5;
         const vec2 centre = vec2(0.5, 0.5);
 
         void main() {
-            // Find frag point relative to centre and scale according to aspect ratio
+            // Find frag point relative to centre and compute distance
             vec2 p = uv - centre;
-            p.x *= resolution.x / resolution.y;
             float dist = length(p);
 
             // Only colour fragments on circle
@@ -181,9 +181,8 @@ int main(int argc, char* argv[]) {
     glDeleteShader(fragmentShader);
 
     int offsetLoc = glGetUniformLocation(shaderProgram, "offset");
-    int resolutionLoc = glGetUniformLocation(shaderProgram, "resolution");
 
-    Particle particle(PARTICLE_RADIUS, 0.1, Vec2(0, 0), Vec2(0.25, 2.0), Vec2(0, -G_ACCEL / 5));
+    Particle particle(MASS, RADIUS, Vec2(0, 0), Vec2(0.25, 2.25), Vec2(0, -G_ACCEL / 5));
     auto last = sc::now();
     auto current = sc::now();
     double frame_time;
@@ -210,7 +209,7 @@ int main(int argc, char* argv[]) {
             accumulator -= SIM_DELTA_T;
         }
 
-        render(window, VAO, shaderProgram, offsetLoc, resolutionLoc, particle);
+        render(window, VAO, shaderProgram, offsetLoc, particle);
     }
 
     glfwTerminate();
@@ -252,6 +251,36 @@ void update(
         Particle& p
 ) {
     p.update(delta_t);
+
+    // Work on local mutable copies and set at the end
+    Vec2 pos = p.get_pos();
+    Vec2 vel = p.get_vel();
+    const float r = p.get_radius();
+    const float r_asp = r * ASPECT;  // To account for horizontal stretch
+    // Check if particle has hit a wall and implement bounce mechanic
+    if (pos[0] - r_asp < -1) {
+        // Left wall
+        pos[0] = -1 + r_asp;
+        vel[0] *= -1;
+    }
+    else if (pos[0] + r_asp > 1) {
+        // Right wall
+        pos[0] = 1 - r_asp;
+        vel[0] *= -1;
+    }
+    if (pos[1] - r < -1) {
+        // Bottom wall
+        pos[1] = -1 + r;
+        vel[1] *= -1;
+    }
+    else if (pos[1] + r > 1) {
+        // Top wall
+        pos[1] = 1 - r;
+        vel[1] *= -1;
+    }
+
+    p.set_pos(pos);
+    p.set_vel(vel);
 }
 
 void render(
@@ -259,7 +288,6 @@ void render(
         unsigned int VAO,
         unsigned int shaderProgram,
         int offsetLoc,
-        int resolutionLoc,
         const Particle& p
 ) {
     // Clear screen to RGBA colour
@@ -270,7 +298,6 @@ void render(
     // Render circle via mask applied to quad
     glUseProgram(shaderProgram);
     glUniform2f(offsetLoc, pos[0], pos[1]);
-    glUniform2f(resolutionLoc, WIN_WIDTH, WIN_HEIGHT);
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 

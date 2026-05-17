@@ -23,9 +23,13 @@ class Particle {
 
         void update(float delta_t);
 
-        Vec2 get_pos() const;
+        float get_radius() const;
+        const Vec2& get_pos() const;
         const Vec2& get_vel() const;
         const Vec2& get_accel() const;
+
+        void set_pos(const Vec2& p);
+        void set_vel(const Vec2& v);
 };
 
 #endif
