@@ -10,7 +10,8 @@ class Vec2 {
     public:
         Vec2(float x = 0.0f, float y = 0.0f);
 
-        float operator[](std::size_t i) const;
+        float& operator[](std::size_t i);
+        const float& operator[](std::size_t i) const;
         float mag() const;
         Vec2 norm() const;
         Vec2 operator*(float s) const;

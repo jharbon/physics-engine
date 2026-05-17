@@ -5,7 +5,21 @@
 
 Vec2::Vec2(float x, float y) : x{x}, y{y} {}
 
-float Vec2::operator[](std::size_t i) const {
+float& Vec2::operator[](std::size_t i) {
+    if (i == 0) {
+        return this->x;
+    }
+    else if (i == 1) {
+        return this->y;
+    }
+    else {
+        std::stringstream error;
+        error << "Attempted to index Vec2 with index " << i << " but only 0 or 1 are allowed";
+        throw std::runtime_error(error.str());
+    }
+}
+
+const float& Vec2::operator[](std::size_t i) const {
     if (i == 0) {
         return this->x;
     }

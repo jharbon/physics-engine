@@ -46,6 +46,77 @@ void test_index() {
     }
 
     assert(high_idx_caught);
+
+    assert(compare_floats(a[0], 0.5));
+    assert(compare_floats(a[1], 2.2));
+}
+
+void test_const_index() {
+    const Vec2 a(0.5, 2.2);
+
+    bool can_read = true;
+    try {
+        a[0];
+    }
+    catch (...) {
+        can_read = false;
+    }
+    try {
+        a[1];
+    }
+    catch (...) {
+        can_read = false;
+    }
+    
+    assert(can_read);
+
+    bool negative_idx_caught = false;
+    try {
+        a[-1];
+    }
+    catch (...) {
+        negative_idx_caught = true;
+    }
+
+    assert(negative_idx_caught);
+
+    bool high_idx_caught = false;
+    try {
+        a[2];
+    }
+    catch (...) {
+        high_idx_caught = true;
+    }
+
+    assert(high_idx_caught);
+
+    assert(compare_floats(a[0], 0.5));
+    assert(compare_floats(a[1], 2.2));
+
+}
+
+void test_set_value() {
+    Vec2 a(0.5, 2.2);
+    Vec2 b(2.5, -0.2);
+    Vec2 c(0.2, 0.0);
+
+    a[0] = 3.0;
+    a[1] = 5.0;
+
+    b[0] = 0.0;
+    b[1] = 0.0;
+
+    c[0] = -1.5;
+    c[1] = -4.0;
+
+    assert(compare_floats(a[0], 3.0));
+    assert(compare_floats(a[1], 5.0));
+
+    assert(compare_floats(b[0], 0.0));
+    assert(compare_floats(b[1], 0.0));
+
+    assert(compare_floats(c[0], -1.5));
+    assert(compare_floats(c[1], -4.0));
 }
 
 void test_magnitude() {
@@ -202,6 +273,8 @@ void run_test(const char* name, void(*fn)()) {
 int main(int argc, char* argv[]) {
     run_test("test_constructor", test_constructor);
     run_test("test_index", test_index);
+    run_test("test_const_index", test_const_index);
+    run_test("test_set_value", test_set_value);
     run_test("test_magnitude", test_magnitude);
     run_test("test_normalisation", test_normalisation);
     run_test("test_multiply", test_multiply);
