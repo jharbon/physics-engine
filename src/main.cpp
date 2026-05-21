@@ -5,6 +5,7 @@
 #include <Vec2.hpp>
 
 #include <iostream>
+#include <vector>
 #include <chrono>
 
 using sc = std::chrono::steady_clock;
@@ -25,7 +26,7 @@ void check_program_linking(const unsigned int program, const char* name);
 
 void update(
         const double delta_t,
-        Particle& p
+        std::vector<Particle>& particles
 );
 
 void render(
@@ -33,7 +34,7 @@ void render(
         unsigned int VAO,
         unsigned int shaderProgram,
         int offsetLoc,
-        const Particle& p
+        const std::vector<Particle>& particles
 );
 
 int main(int argc, char* argv[]) {
@@ -182,7 +183,12 @@ int main(int argc, char* argv[]) {
 
     int offsetLoc = glGetUniformLocation(shaderProgram, "offset");
 
-    Particle particle(MASS, RADIUS, Vec2(0, 0), Vec2(0.25, 2.25), Vec2(0, -G_ACCEL / 5));
+    std::vector<Particle> particles = {
+        Particle(MASS, RADIUS, Vec2(0, 0.5), Vec2(0.5, 0.3), Vec2(0, 0)),
+        Particle(MASS, RADIUS, Vec2(0, -0.5), Vec2(-0.6, -0.2), Vec2(0, 0)),
+        Particle(MASS, RADIUS, Vec2(0, -0.5), Vec2(0, 1.0), Vec2(0, 0))
+    };
+    
     auto last = sc::now();
     auto current = sc::now();
     double frame_time;
@@ -205,11 +211,11 @@ int main(int argc, char* argv[]) {
         accumulator += frame_time;
 
         while (accumulator >= SIM_DELTA_T) {
-            update(SIM_DELTA_T, particle);
+            update(SIM_DELTA_T, particles);
             accumulator -= SIM_DELTA_T;
         }
 
-        render(window, VAO, shaderProgram, offsetLoc, particle);
+        render(window, VAO, shaderProgram, offsetLoc, particles);
     }
 
     glfwTerminate();
@@ -248,39 +254,41 @@ void check_program_linking(
 
 void update(
         const double delta_t,
-        Particle& p
+        std::vector<Particle>& particles
 ) {
-    p.update(delta_t);
+    for (auto& p : particles) {
+        p.update(delta_t);
 
-    // Work on local mutable copies and set at the end
-    Vec2 pos = p.get_pos();
-    Vec2 vel = p.get_vel();
-    const float r = p.get_radius();
-    const float r_asp = r * ASPECT;  // To account for horizontal stretch
-    // Check if particle has hit a wall and implement bounce mechanic
-    if (pos[0] - r_asp < -1) {
-        // Left wall
-        pos[0] = -1 + r_asp;
-        vel[0] *= -1;
-    }
-    else if (pos[0] + r_asp > 1) {
-        // Right wall
-        pos[0] = 1 - r_asp;
-        vel[0] *= -1;
-    }
-    if (pos[1] - r < -1) {
-        // Bottom wall
-        pos[1] = -1 + r;
-        vel[1] *= -1;
-    }
-    else if (pos[1] + r > 1) {
-        // Top wall
-        pos[1] = 1 - r;
-        vel[1] *= -1;
-    }
+        // Work on local mutable copies and set at the end
+        Vec2 pos = p.get_pos();
+        Vec2 vel = p.get_vel();
+        const float r = p.get_radius();
+        const float r_asp = r * ASPECT;  // To account for horizontal stretch
+        // Check if particle has hit a wall and implement bounce mechanic
+        if (pos[0] - r_asp < -1) {
+            // Left wall
+            pos[0] = -1 + r_asp;
+            vel[0] *= -1;
+        }
+        else if (pos[0] + r_asp > 1) {
+            // Right wall
+            pos[0] = 1 - r_asp;
+            vel[0] *= -1;
+        }
+        if (pos[1] - r < -1) {
+            // Bottom wall
+            pos[1] = -1 + r;
+            vel[1] *= -1;
+        }
+        else if (pos[1] + r > 1) {
+            // Top wall
+            pos[1] = 1 - r;
+            vel[1] *= -1;
+        }
 
-    p.set_pos(pos);
-    p.set_vel(vel);
+        p.set_pos(pos);
+        p.set_vel(vel);
+    }
 }
 
 void render(
@@ -288,18 +296,20 @@ void render(
         unsigned int VAO,
         unsigned int shaderProgram,
         int offsetLoc,
-        const Particle& p
+        const std::vector<Particle>& particles
 ) {
     // Clear screen to RGBA colour
     glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    Vec2 pos = p.get_pos();
-    // Render circle via mask applied to quad
-    glUseProgram(shaderProgram);
-    glUniform2f(offsetLoc, pos[0], pos[1]);
-    glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    for (const auto& p : particles) {
+        Vec2 pos = p.get_pos();
+        // Render circle via mask applied to quad
+        glUseProgram(shaderProgram);
+        glUniform2f(offsetLoc, pos[0], pos[1]);
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+    }
 
     // Display frame
     glfwSwapBuffers(window);
