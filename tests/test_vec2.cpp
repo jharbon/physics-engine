@@ -1,17 +1,8 @@
-#include <cassert>
 #include <Vec2.hpp>
-#include <cmath>
+#include <helpers.hpp>
+
+#include <cassert>
 #include <iostream>
-
-const float FLOAT_EQ_TOLERANCE = 5e-5;
-
-bool compare_floats(
-        float f1,
-        float f2,
-        float tolerance = FLOAT_EQ_TOLERANCE
-) {
-    return std::abs(f1 - f2) < tolerance;
-}
 
 void test_constructor() {
     Vec2 a(0.5, 2.2);
@@ -262,12 +253,6 @@ void test_dot_product() {
 
     assert(compare_floats(a_dot_b, -0.44));
     assert(compare_floats(c_dot_d, 0.62));
-}
-
-void run_test(const char* name, void(*fn)()) {
-    std::cout << "Running " << name << "...\n";
-    fn();
-    std::cout << "Passed " << name << "\n\n";    
 }
 
 int main(int argc, char* argv[]) {

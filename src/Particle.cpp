@@ -14,6 +14,10 @@ void Particle::update(float delta_t) {
     this->vel += this->accel * delta_t;
 }
 
+float Particle::get_mass() const {
+    return this->mass;
+}
+
 float Particle::get_radius() const {
     return this->radius;
 }

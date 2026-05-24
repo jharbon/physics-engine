@@ -3,6 +3,7 @@
 
 #include <Particle.hpp>
 #include <Vec2.hpp>
+#include <collision.hpp>
 
 #include <iostream>
 #include <vector>
@@ -198,7 +199,9 @@ int main(int argc, char* argv[]) {
     std::vector<Particle> particles = {
         Particle(MASS, RADIUS, Vec2(0, 0.5), Vec2(0.5, 0.3), Vec2(0, 0)),
         Particle(MASS, RADIUS, Vec2(-0.5, 0), Vec2(-0.6, -0.2), Vec2(0, 0)),
-        Particle(MASS, RADIUS, Vec2(0.5, 0), Vec2(0, 1.0), Vec2(0, 0))
+        Particle(MASS, RADIUS, Vec2(0.5, 0), Vec2(0, 1.0), Vec2(0, 0)),
+        Particle(MASS, RADIUS, Vec2(-1.0, 0), Vec2(2.0, 0), Vec2(0, 0)),
+        Particle(MASS, RADIUS, Vec2(-1.0, 1.0), Vec2(0.5, -1.0), Vec2(0, 0))
     };
     
     auto last = sc::now();
@@ -268,6 +271,7 @@ void update(
         const double delta_t,
         std::vector<Particle>& particles
 ) {
+    // Integration and wall-bounce
     for (auto& p : particles) {
         p.update(delta_t);
 
@@ -300,6 +304,17 @@ void update(
         p.set_pos(pos);
         p.set_vel(vel);
     }
+
+    // Particle collisions
+    for (size_t i = 0; i < particles.size(); i++)    
+        for (size_t j = i + 1; j < particles.size(); j++) {  // Resolve each pair once
+            auto& p1 = particles[i];
+            auto& p2 = particles[j];
+
+            if (particles_colliding(p1, p2)) {
+                resolve_collision(p1, p2);
+            }
+        }
 }
 
 void render(
@@ -314,13 +329,14 @@ void render(
     glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    glUseProgram(shaderProgram);
+    glUniform1f(worldRightLoc, WORLD_RIGHT);
+    glBindVertexArray(VAO);
+
     for (const auto& p : particles) {
         Vec2 pos = p.get_pos();
         // Render circle via mask applied to quad
-        glUseProgram(shaderProgram);
         glUniform2f(offsetLoc, pos[0], pos[1]);
-        glUniform1f(worldRightLoc, WORLD_RIGHT);
-        glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
