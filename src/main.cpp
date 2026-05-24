@@ -10,10 +10,14 @@
 
 using sc = std::chrono::steady_clock;
 
+// Resolution
 constexpr int WIN_WIDTH = 960;
 constexpr int WIN_HEIGHT = 540;
-// Define inverse of aspect ratio to scale NDC horizontal dimension when working with particle geometry
-constexpr float ASPECT = (float)WIN_HEIGHT / WIN_WIDTH;
+// World (physics) space bounds
+constexpr float WORLD_RIGHT = (float)WIN_WIDTH / WIN_HEIGHT;
+constexpr float WORLD_LEFT = -WORLD_RIGHT;
+constexpr float WORLD_TOP = 1;
+constexpr float WORLD_BOTTOM = -WORLD_TOP;
 
 constexpr float MASS = 0.1;
 constexpr float RADIUS = 0.2;
@@ -34,6 +38,7 @@ void render(
         unsigned int VAO,
         unsigned int shaderProgram,
         int offsetLoc,
+        int worldRightLoc,
         const std::vector<Particle>& particles
 );
 
@@ -71,17 +76,16 @@ int main(int argc, char* argv[]) {
     glViewport(0, 0, WIN_WIDTH, WIN_HEIGHT);
 
     const float r = RADIUS;
-    const float r_asp = r * ASPECT;  // To account for horizontal stretch
     // Define quad with dimensions 2r x 2r using two triangles; this small local quad moves to particle position
     float vertices[] = {
-        // Vertices         // UVs
-        -r_asp, -r,         0.0f, 0.0f,   
-         r_asp, -r,         1.0f, 0.0f,    
-         r_asp,  r,         1.0f, 1.0f,
+        // Vertices   // UVs
+        -r, -r,       0.0f, 0.0f,   
+         r, -r,       1.0f, 0.0f,    
+         r,  r,       1.0f, 1.0f,
 
-        -r_asp, -r,         0.0f, 0.0f,
-         r_asp,  r,         1.0f, 1.0f,
-        -r_asp,  r,         0.0f, 1.0f
+        -r, -r,       0.0f, 0.0f,
+         r,  r,       1.0f, 1.0f,
+        -r,  r,       0.0f, 1.0f
     };
 
     // Generate and bind Vertex Array Object (interpret data) and Vertex Buffer Object (store data on GPU)
@@ -125,12 +129,19 @@ int main(int argc, char* argv[]) {
         layout (location = 1) in vec2 aUV;
 
         uniform vec2 offset;
+        uniform float world_right;
 
         out vec2 uv;
 
         void main() {
             uv = aUV;
-            gl_Position = vec4(aPos + offset, 0.0, 1.0);
+
+            // Project world coordinates to NDC
+            vec2 ndc;
+            ndc.x = (aPos.x + offset.x) / world_right;
+            ndc.y = aPos.y + offset.y;
+
+            gl_Position = vec4(ndc, 0.0, 1.0);
         }
         )";
 
@@ -182,11 +193,12 @@ int main(int argc, char* argv[]) {
     glDeleteShader(fragmentShader);
 
     int offsetLoc = glGetUniformLocation(shaderProgram, "offset");
+    int worldRightLoc = glGetUniformLocation(shaderProgram, "world_right");
 
     std::vector<Particle> particles = {
         Particle(MASS, RADIUS, Vec2(0, 0.5), Vec2(0.5, 0.3), Vec2(0, 0)),
-        Particle(MASS, RADIUS, Vec2(0, -0.5), Vec2(-0.6, -0.2), Vec2(0, 0)),
-        Particle(MASS, RADIUS, Vec2(0, -0.5), Vec2(0, 1.0), Vec2(0, 0))
+        Particle(MASS, RADIUS, Vec2(-0.5, 0), Vec2(-0.6, -0.2), Vec2(0, 0)),
+        Particle(MASS, RADIUS, Vec2(0.5, 0), Vec2(0, 1.0), Vec2(0, 0))
     };
     
     auto last = sc::now();
@@ -215,7 +227,7 @@ int main(int argc, char* argv[]) {
             accumulator -= SIM_DELTA_T;
         }
 
-        render(window, VAO, shaderProgram, offsetLoc, particles);
+        render(window, VAO, shaderProgram, offsetLoc, worldRightLoc, particles);
     }
 
     glfwTerminate();
@@ -261,28 +273,27 @@ void update(
 
         // Work on local mutable copies and set at the end
         Vec2 pos = p.get_pos();
-        Vec2 vel = p.get_vel();
+        Vec2 vel = p.get_vel(); 
         const float r = p.get_radius();
-        const float r_asp = r * ASPECT;  // To account for horizontal stretch
         // Check if particle has hit a wall and implement bounce mechanic
-        if (pos[0] - r_asp < -1) {
+        if (pos[0] - r < WORLD_LEFT) {
             // Left wall
-            pos[0] = -1 + r_asp;
+            pos[0] = WORLD_LEFT + r;
             vel[0] *= -1;
         }
-        else if (pos[0] + r_asp > 1) {
+        else if (pos[0] + r > WORLD_RIGHT) {
             // Right wall
-            pos[0] = 1 - r_asp;
+            pos[0] = WORLD_RIGHT - r;
             vel[0] *= -1;
         }
-        if (pos[1] - r < -1) {
+        if (pos[1] - r < WORLD_BOTTOM) {
             // Bottom wall
-            pos[1] = -1 + r;
+            pos[1] = WORLD_BOTTOM + r;
             vel[1] *= -1;
         }
-        else if (pos[1] + r > 1) {
+        else if (pos[1] + r > WORLD_TOP) {
             // Top wall
-            pos[1] = 1 - r;
+            pos[1] = WORLD_TOP - r;
             vel[1] *= -1;
         }
 
@@ -296,6 +307,7 @@ void render(
         unsigned int VAO,
         unsigned int shaderProgram,
         int offsetLoc,
+        int worldRightLoc,
         const std::vector<Particle>& particles
 ) {
     // Clear screen to RGBA colour
@@ -307,6 +319,7 @@ void render(
         // Render circle via mask applied to quad
         glUseProgram(shaderProgram);
         glUniform2f(offsetLoc, pos[0], pos[1]);
+        glUniform1f(worldRightLoc, WORLD_RIGHT);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
