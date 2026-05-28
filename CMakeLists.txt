@@ -14,6 +14,7 @@ include_directories(
 add_executable(physics_engine
     src/main.cpp
     src/glad.c
+    src/SimulationPhysics.cpp
     src/Vec2.cpp
     src/Particle.cpp
     src/collision.cpp

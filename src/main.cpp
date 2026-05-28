@@ -1,6 +1,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <SimulationPhysics.hpp>
 #include <Particle.hpp>
 #include <Vec2.hpp>
 #include <collision.hpp>
@@ -28,11 +29,6 @@ constexpr double FRAME_TIME_CLAMP = 0.25;  // s
 
 void check_shader_compilation(const unsigned int shader, const char* name);
 void check_program_linking(const unsigned int program, const char* name);
-
-void update(
-        const double delta_t,
-        std::vector<Particle>& particles
-);
 
 void render(
         GLFWwindow* window,
@@ -203,6 +199,13 @@ int main(int argc, char* argv[]) {
         Particle(MASS, RADIUS, Vec2(-1.0, 0), Vec2(2.0, 0), Vec2(0, 0)),
         Particle(MASS, RADIUS, Vec2(-1.0, 1.0), Vec2(0.5, -1.0), Vec2(0, 0))
     };
+
+    WorldBounds bounds;
+    bounds.left = WORLD_LEFT;
+    bounds.right = WORLD_RIGHT;
+    bounds.bottom = WORLD_BOTTOM;
+    bounds.top = WORLD_TOP;
+    SimulationPhysics simulation(particles, bounds);
     
     auto last = sc::now();
     auto current = sc::now();
@@ -226,11 +229,11 @@ int main(int argc, char* argv[]) {
         accumulator += frame_time;
 
         while (accumulator >= SIM_DELTA_T) {
-            update(SIM_DELTA_T, particles);
+            simulation.step(SIM_DELTA_T);
             accumulator -= SIM_DELTA_T;
         }
 
-        render(window, VAO, shaderProgram, offsetLoc, worldRightLoc, particles);
+        render(window, VAO, shaderProgram, offsetLoc, worldRightLoc, simulation.get_all_particles());
     }
 
     glfwTerminate();
@@ -265,56 +268,6 @@ void check_program_linking(
         glGetProgramInfoLog(program, 512, NULL, log);
         std::cerr << log << std::endl;
     }
-}
-
-void update(
-        const double delta_t,
-        std::vector<Particle>& particles
-) {
-    // Integration and wall-bounce
-    for (auto& p : particles) {
-        p.update(delta_t);
-
-        // Work on local mutable copies and set at the end
-        Vec2 pos = p.get_pos();
-        Vec2 vel = p.get_vel(); 
-        const float r = p.get_radius();
-        // Check if particle has hit a wall and implement bounce mechanic
-        if (pos[0] - r < WORLD_LEFT) {
-            // Left wall
-            pos[0] = WORLD_LEFT + r;
-            vel[0] *= -1;
-        }
-        else if (pos[0] + r > WORLD_RIGHT) {
-            // Right wall
-            pos[0] = WORLD_RIGHT - r;
-            vel[0] *= -1;
-        }
-        if (pos[1] - r < WORLD_BOTTOM) {
-            // Bottom wall
-            pos[1] = WORLD_BOTTOM + r;
-            vel[1] *= -1;
-        }
-        else if (pos[1] + r > WORLD_TOP) {
-            // Top wall
-            pos[1] = WORLD_TOP - r;
-            vel[1] *= -1;
-        }
-
-        p.set_pos(pos);
-        p.set_vel(vel);
-    }
-
-    // Particle collisions
-    for (size_t i = 0; i < particles.size(); i++)    
-        for (size_t j = i + 1; j < particles.size(); j++) {  // Resolve each pair once
-            auto& p1 = particles[i];
-            auto& p2 = particles[j];
-
-            if (particles_colliding(p1, p2)) {
-                resolve_collision(p1, p2);
-            }
-        }
 }
 
 void render(
