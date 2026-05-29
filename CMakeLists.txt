@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
+find_package(fmt REQUIRED)
 
 include_directories(
     include
@@ -14,6 +15,8 @@ include_directories(
 add_executable(physics_engine
     src/main.cpp
     src/glad.c
+    src/Shader.cpp
+    src/Renderer.cpp
     src/SimulationPhysics.cpp
     src/Vec2.cpp
     src/Particle.cpp
@@ -45,4 +48,5 @@ add_test(NAME CollisionTests
 target_link_libraries(physics_engine
     OpenGL::GL
     glfw
+    fmt::fmt
 )
