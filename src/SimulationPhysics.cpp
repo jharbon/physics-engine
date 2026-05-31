@@ -17,7 +17,10 @@ namespace {
 
 
 SimulationPhysics::SimulationPhysics(std::vector<Particle> particles, WorldBounds bounds)
-    : particles{std::move(particles)}, bounds{bounds} {}
+        : particles{std::move(particles)}, bounds{bounds} {
+
+    this->init_particles = this->particles;
+}
 
 void SimulationPhysics::step(float delta_t) {
     validate_step_time(delta_t);
@@ -65,6 +68,10 @@ void SimulationPhysics::step(float delta_t) {
                 resolve_collision(p1, p2);
             }
         }
+}
+
+void SimulationPhysics::reset() {
+    this->particles = this->init_particles;
 }
 
 const Particle& SimulationPhysics::get_particle(size_t i) const {

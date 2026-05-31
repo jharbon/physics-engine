@@ -1,7 +1,7 @@
 #include <SimulationControl.hpp>
 
 SimulationState::SimulationState(bool paused, bool step)
-        : paused{paused}, step{step} {}
+        : paused{paused}, step{step}, reset{false} {}
 
 void SimulationState::toggle_pause() {
     this->paused = !this->paused;
@@ -9,6 +9,10 @@ void SimulationState::toggle_pause() {
 
 void SimulationState::toggle_step() {
     this->step = !this->step;
+}
+
+void SimulationState::toggle_reset() {
+    this->reset = !this->reset;
 }
 
 bool SimulationState::is_paused() const {
@@ -19,8 +23,12 @@ bool SimulationState::is_step() const {
     return this->step;
 }
 
+bool SimulationState::is_reset() const {
+    return this->reset;
+}
+
 SimulationController::SimulationController(bool paused, bool step) 
-        : state{paused, step}, pause_pressed{false}, step_pressed{false} {}
+        : state{paused, step}, pause_pressed{false}, step_pressed{false}, reset_pressed{false} {}
 
 void SimulationController::update_state(GLFWwindow* window) {
     if (glfwGetKey(window, key_bindings::PAUSE) == GLFW_PRESS) {
@@ -51,6 +59,19 @@ void SimulationController::update_state(GLFWwindow* window) {
             this->state.toggle_pause();
         }
 
+    }
+
+    if (glfwGetKey(window, key_bindings::RESET) == GLFW_PRESS) {
+        if (!this->reset_pressed) {
+            this->reset_pressed = true;
+            this->state.toggle_reset();
+        }
+    }
+    else {
+        this->reset_pressed = false;
+        if (this->state.is_reset()) {
+            this->state.toggle_reset();
+        }
     }
 }
 

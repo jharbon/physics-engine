@@ -17,10 +17,14 @@ class SimulationPhysics {
         std::vector<Particle> particles;
         WorldBounds bounds;
 
+        // Keep copy of initial states of particles to enable reset functionality
+        std::vector<Particle> init_particles;
+
     public:
         SimulationPhysics(std::vector<Particle> particles, WorldBounds bounds);
 
         void step(float delta_t);
+        void reset();
 
         const Particle& get_particle(size_t i) const;
         const std::vector<Particle>& get_all_particles() const;

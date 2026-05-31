@@ -65,6 +65,11 @@ int main(int argc, char* argv[]) {
             frame_time = FRAME_TIME_CLAMP;
         }
 
+        if (controller.get_state().is_reset()) {
+            simulation.reset();
+            accumulator = 0.0;
+        }
+
         if (!controller.get_state().is_paused()) {
             accumulator += frame_time;
 
