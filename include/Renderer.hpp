@@ -33,6 +33,8 @@ class Renderer {
 
         void clear(float r, float g, float b, float a);
         void draw(float world_right, const std::vector<Particle>& particles);
+
+        GLFWwindow* get_window() const;
 };
 
 #endif

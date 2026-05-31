@@ -1,11 +1,8 @@
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
+#include <Renderer.hpp>
 #include <Particle.hpp>
 #include <Vec2.hpp>
 #include <SimulationPhysics.hpp>
-#include <Renderer.hpp>
-#include <collision.hpp>
+#include <SimulationControl.hpp>
 
 #include <iostream>
 #include <vector>
@@ -45,6 +42,8 @@ int main(int argc, char* argv[]) {
     bounds.bottom = WORLD_BOTTOM;
     bounds.top = WORLD_TOP;
     SimulationPhysics simulation(particles, bounds);
+
+    SimulationController controller;
     
     auto last = sc::now();
     auto current = sc::now();
@@ -55,6 +54,7 @@ int main(int argc, char* argv[]) {
     while (!renderer.should_close()) {
         // Check for new events
         renderer.poll_events();
+        controller.update_state(renderer.get_window());
         
         current = sc::now();
         frame_time = std::chrono::duration<double>(current - last).count();
@@ -65,11 +65,13 @@ int main(int argc, char* argv[]) {
             frame_time = FRAME_TIME_CLAMP;
         }
 
-        accumulator += frame_time;
+        if (!controller.get_state().is_paused()) {
+            accumulator += frame_time;
 
-        while (accumulator >= SIM_DELTA_T) {
-            simulation.step(SIM_DELTA_T);
-            accumulator -= SIM_DELTA_T;
+            while (accumulator >= SIM_DELTA_T) {
+                simulation.step(SIM_DELTA_T);
+                accumulator -= SIM_DELTA_T;
+            }
         }
 
         renderer.clear(0.5f, 0.5f, 0.5f, 1.0f);

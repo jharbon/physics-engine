@@ -18,6 +18,7 @@ add_executable(physics_engine
     src/Shader.cpp
     src/Renderer.cpp
     src/SimulationPhysics.cpp
+    src/SimulationControl.cpp
     src/Vec2.cpp
     src/Particle.cpp
     src/collision.cpp
