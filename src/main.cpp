@@ -71,7 +71,8 @@ int main(int argc, char* argv[]) {
         }
 
         if (!controller.get_state().is_paused()) {
-            accumulator += frame_time;
+            // Scale frame time to control speed of simulation
+            accumulator += frame_time * controller.get_state().get_time_scale();
 
             while (accumulator >= SIM_DELTA_T) {
                 simulation.step(SIM_DELTA_T);
