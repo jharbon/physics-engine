@@ -51,6 +51,7 @@ Shader::Shader()
         layout (location = 0) in vec2 aPos;
         layout (location = 1) in vec2 aUV;
 
+        uniform float {};
         uniform vec2 {};
         uniform float {};
 
@@ -59,14 +60,15 @@ Shader::Shader()
         void main() {{
             uv = aUV;
 
-            // Project world coordinates to NDC
+            // Scale vertex with particle radius, shift by offset, and project world coordinates to NDC
             vec2 ndc;
-            ndc.x = (aPos.x + offset.x) / world_right;
-            ndc.y = aPos.y + offset.y;
+            ndc.x = (aPos.x * radius + offset.x) / world_right;
+            ndc.y = aPos.y * radius + offset.y;
 
             gl_Position = vec4(ndc, 0.0, 1.0);
         }}
         )",
+        uniform_names::RADIUS,
         uniform_names::OFFSET,
         uniform_names::WORLD_RIGHT
     );
@@ -121,8 +123,9 @@ Shader::Shader()
     glDeleteShader(fragment_shader);
 
     this->program = shader_program;
-    this->uniform_locs[uniform_names::WORLD_RIGHT] = glGetUniformLocation(shader_program, "world_right");
-    this->uniform_locs[uniform_names::OFFSET] = glGetUniformLocation(shader_program, "offset");
+    this->uniform_locs[uniform_names::RADIUS] = glGetUniformLocation(shader_program, uniform_names::RADIUS.c_str());
+    this->uniform_locs[uniform_names::OFFSET] = glGetUniformLocation(shader_program, uniform_names::OFFSET.c_str());
+    this->uniform_locs[uniform_names::WORLD_RIGHT] = glGetUniformLocation(shader_program, uniform_names::WORLD_RIGHT.c_str());
 }
 
 Shader::~Shader() {

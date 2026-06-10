@@ -1,6 +1,8 @@
 #include <Renderer.hpp>
 #include <Particle.hpp>
 #include <Vec2.hpp>
+#include <math_utils.hpp>
+#include <sim_utils.hpp>
 #include <SimulationPhysics.hpp>
 #include <SimulationControl.hpp>
 
@@ -19,28 +21,40 @@ constexpr float WORLD_LEFT = -WORLD_RIGHT;
 constexpr float WORLD_TOP = 1;
 constexpr float WORLD_BOTTOM = -WORLD_TOP;
 
-constexpr float MASS = 0.1;
-constexpr float RADIUS = 0.2;
+// Particles
+constexpr size_t NUM_PARTICLES = 50;
+constexpr float DENSITY = 5.0;
+constexpr float MIN_RADIUS = 0.05;
+constexpr float MAX_RADIUS = 0.1;
+const Vec2 MIN_VEL(-1.0, -1.0);
+const Vec2 MAX_VEL(1.0, 1.0);
+
+// Physics
 constexpr float G_ACCEL = 9.81;  // m/s^2
 constexpr double SIM_DELTA_T = 1.0 / 60.0;  // s - corresponds to 60Hz 
 constexpr double FRAME_TIME_CLAMP = 0.25;  // s
 
 int main(int argc, char* argv[]) {
-    Renderer renderer(WIN_WIDTH, WIN_HEIGHT, RADIUS);
-
-    std::vector<Particle> particles = {
-        Particle(MASS, RADIUS, Vec2(0, 0.5), Vec2(0.5, 0.3), Vec2(0, 0)),
-        Particle(MASS, RADIUS, Vec2(-0.5, 0), Vec2(-0.6, -0.2), Vec2(0, 0)),
-        Particle(MASS, RADIUS, Vec2(0.5, 0), Vec2(0, 1.0), Vec2(0, 0)),
-        Particle(MASS, RADIUS, Vec2(-1.0, 0), Vec2(2.0, 0), Vec2(0, 0)),
-        Particle(MASS, RADIUS, Vec2(-1.0, 1.0), Vec2(0.5, -1.0), Vec2(0, 0))
-    };
+    Renderer renderer(WIN_WIDTH, WIN_HEIGHT);
 
     WorldBounds bounds;
     bounds.left = WORLD_LEFT;
     bounds.right = WORLD_RIGHT;
     bounds.bottom = WORLD_BOTTOM;
     bounds.top = WORLD_TOP;
+
+    RandomNumberGenerator rng;
+    std::vector<Particle> particles = generate_multiple_particles(
+        NUM_PARTICLES,
+        MIN_RADIUS,
+        MAX_RADIUS,
+        DENSITY,
+        bounds,
+        MIN_VEL,
+        MAX_VEL,
+        rng
+    );
+
     SimulationPhysics simulation(particles, bounds);
 
     SimulationController controller;

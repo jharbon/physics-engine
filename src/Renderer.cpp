@@ -3,7 +3,7 @@
 #include <iostream>
 #include <stdexcept>
 
-Renderer::Renderer(unsigned int width, unsigned int height, float particle_radius)
+Renderer::Renderer(unsigned int width, unsigned int height)
     : window{nullptr}, VBO{0}, VAO{0}, shader{nullptr} {
     if (!glfwInit()) {
         throw std::runtime_error("Failed to initialise GLFW");
@@ -34,17 +34,16 @@ Renderer::Renderer(unsigned int width, unsigned int height, float particle_radiu
     std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
     glViewport(0, 0, width, height);
 
-    const float r = particle_radius;
-    // Define quad with dimensions 2r x 2r using two triangles; this small local quad moves to particle position
+    // Define 2.0 x 2.0 quad using two triangles; dimensions are scaled using particle radius in vertex shader
     float vertices[] = {
-        // Vertices   // UVs
-        -r, -r,       0.0f, 0.0f,   
-         r, -r,       1.0f, 0.0f,    
-         r,  r,       1.0f, 1.0f,
+        // Vertices      // UVs
+        -1.0f, -1.0f,    0.0f, 0.0f,   
+         1.0f, -1.0f,    1.0f, 0.0f,    
+         1.0f,  1.0f,    1.0f, 1.0f,
 
-        -r, -r,       0.0f, 0.0f,
-         r,  r,       1.0f, 1.0f,
-        -r,  r,       0.0f, 1.0f
+        -1.0f, -1.0f,    0.0f, 0.0f,
+         1.0f,  1.0f,    1.0f, 1.0f,
+        -1.0f,  1.0f,    0.0f, 1.0f
     };
 
     // Generate and bind Vertex Array Object (interpret data) and Vertex Buffer Object (store data on GPU)
@@ -111,8 +110,9 @@ void Renderer::draw(float world_right, const std::vector<Particle>& particles) {
     glBindVertexArray(this->VAO);
 
     for (const auto& p : particles) {
-        Vec2 pos = p.get_pos();
+        const Vec2 pos = p.get_pos();
         // Render circle via mask applied to quad
+        this->shader->set_uniform_1f(uniform_names::RADIUS, p.get_radius());
         this->shader->set_uniform_2f(uniform_names::OFFSET, pos[0], pos[1]);
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }

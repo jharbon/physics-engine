@@ -17,6 +17,8 @@ add_executable(physics_engine
     src/glad.c
     src/Shader.cpp
     src/Renderer.cpp
+    src/math_utils.cpp
+    src/sim_utils.cpp
     src/SimulationPhysics.cpp
     src/SimulationControl.cpp
     src/Vec2.cpp

@@ -17,7 +17,7 @@ class Renderer {
         std::unique_ptr<Shader> shader;
         
     public:
-        Renderer(unsigned int width, unsigned int height, float particle_radius);
+        Renderer(unsigned int width, unsigned int height);
         ~Renderer();
 
         // Disable copying to avoid sharing resources

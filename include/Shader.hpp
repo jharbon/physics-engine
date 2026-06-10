@@ -5,8 +5,9 @@
 #include <string>
 
 namespace uniform_names {
-    const std::string WORLD_RIGHT = "world_right";
-    const std::string OFFSET = "offset";
+    inline const std::string RADIUS = "radius";
+    inline const std::string OFFSET = "offset";
+    inline const std::string WORLD_RIGHT = "world_right";
 }
 
 class Shader {
