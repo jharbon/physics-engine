@@ -56,7 +56,6 @@ int main(int argc, char* argv[]) {
     );
 
     SimulationPhysics simulation(particles, bounds);
-
     SimulationController controller;
     
     auto last = sc::now();
@@ -97,6 +96,8 @@ int main(int argc, char* argv[]) {
         renderer.clear(0.5f, 0.5f, 0.5f, 1.0f);
         renderer.draw(simulation.get_bounds().right, simulation.get_all_particles());
     }
+
+    simulation.get_stats().print();
 
     return 0;
 }
