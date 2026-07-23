@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
     bounds.top = WORLD_TOP;
 
     RandomNumberGenerator rng;
-    std::vector<Particle> particles = generate_multiple_particles(
+    std::vector<Particle> particles = generate_n_particles(
         NUM_PARTICLES,
         MIN_RADIUS,
         MAX_RADIUS,

@@ -6,13 +6,36 @@
 #include <cmath>
 
 Particle generate_particle(
-        float mass, 
-        float radius, 
+        float min_radius,
+        float max_radius,
+        float world_width,
+        float world_height,
+        float density,  
         const WorldBounds& bounds, 
         const Vec2& min_vel, 
         const Vec2& max_vel,
         RandomNumberGenerator& rng
 ) {
+    // Draw radius from uniform distribution
+    float radius = rng.uniform_draw(min_radius, max_radius);
+    
+    // Check that particle can actually fit in world
+    float diameter = 2.0f * radius;
+    if (diameter > world_width || diameter > world_height) {
+        std::string msg = fmt::format(
+            "Particle with radius {} drawn from uniform distribution [{}, {}] cannot fit in world with (width, height) = ({}, {})",
+            radius,
+            min_radius,
+            max_radius,
+            world_width, 
+            world_height
+        );
+
+        throw std::runtime_error(msg.c_str());
+    }
+
+    // Get mass based on density; assume particle is 2D disc with uniformly distributed mass
+    float mass = density * static_cast<float>(M_PI) * radius * radius;
     // Determine position bounds based on radius padding from world borders 
     Vec2 min_pos(
         bounds.left + radius,
@@ -44,7 +67,7 @@ Particle generate_particle(
     );
 }
 
-std::vector<Particle> generate_multiple_particles(
+std::vector<Particle> generate_n_particles(
         size_t n,
         float min_radius,
         float max_radius,
@@ -60,30 +83,12 @@ std::vector<Particle> generate_multiple_particles(
     std::vector<Particle> particles;
     particles.reserve(n);  // Avoid multiple reallocations 
     for (size_t i = 0; i < n; ++i) {
-        // Draw radius from uniform distribution
-        float radius = rng.uniform_draw(min_radius, max_radius);
-        
-        // Check that particle can actually fit in world
-        float diameter = 2.0f * radius;
-        if (diameter > world_width || diameter > world_height) {
-            std::string msg = fmt::format(
-                "Particle with radius {} drawn from uniform distribution [{}, {}] cannot fit in world with (width, height) = ({}, {})",
-                radius,
-                min_radius,
-                max_radius,
-                world_width, 
-                world_height
-            );
-
-            throw std::runtime_error(msg.c_str());
-        }
-
-        // Get mass based on density; assume particle is 2D disc with uniformly distributed mass
-        float mass = density * static_cast<float>(M_PI) * radius * radius;
-
         particles.push_back(generate_particle(
-            mass,
-            radius,
+            min_radius,
+            max_radius,
+            world_width,
+            world_height,
+            density,
             bounds,
             min_vel,
             max_vel,
