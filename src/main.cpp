@@ -6,6 +6,8 @@
 #include <SimulationPhysics.hpp>
 #include <SimulationControl.hpp>
 
+#include <spdlog/spdlog.h>
+
 #include <iostream>
 #include <vector>
 #include <chrono>
@@ -36,6 +38,7 @@ constexpr double FRAME_TIME_CLAMP = 0.25;  // s
 
 int main(int argc, char* argv[]) {
     Renderer renderer(WIN_WIDTH, WIN_HEIGHT);
+    spdlog::info("Window renderer created with resolution {}x{}", WIN_WIDTH, WIN_HEIGHT);
 
     WorldBounds bounds;
     bounds.left = WORLD_LEFT;
@@ -53,6 +56,17 @@ int main(int argc, char* argv[]) {
         MIN_VEL,
         MAX_VEL,
         rng
+    );
+    spdlog::info(
+        "Generated {} particles with radius drawn from [{},{}]m, density {} kgm^-3, x-velocity drawn from [{},{}]ms^-1, and y-velocity drawn from [{},{}]ms^-1",
+        particles.size(),
+        MIN_RADIUS,
+        MAX_RADIUS,
+        DENSITY,
+        MIN_VEL[0],
+        MAX_VEL[0],
+        MIN_VEL[1],
+        MAX_VEL[1]
     );
 
     SimulationPhysics simulation(particles, bounds);
@@ -80,6 +94,7 @@ int main(int argc, char* argv[]) {
 
         if (controller.get_state().is_reset()) {
             simulation.reset();
+            spdlog::info("Simulation reset");
             accumulator = 0.0;
         }
 

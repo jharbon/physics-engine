@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
+find_package(spdlog REQUIRED)
 find_package(fmt REQUIRED)
 
 include_directories(
@@ -51,5 +52,6 @@ add_test(NAME CollisionTests
 target_link_libraries(physics_engine
     OpenGL::GL
     glfw
+    spdlog::spdlog
     fmt::fmt
 )
