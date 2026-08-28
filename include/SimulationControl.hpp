@@ -40,23 +40,23 @@ class SimulationState {
         );
 
         void toggle_pause();
-        void toggle_step();
-        void toggle_reset();
-
         void half_time_scale();
         void double_time_scale();
         void reset_time_scale();
 
         bool is_paused() const;
-        bool is_step() const;
-        bool is_reset() const;
-        
         float get_time_scale() const;
+};
+
+struct SimulationEvents {
+    bool reset = false;
+    bool step = false;
 };
 
 class SimulationController {
     private:
         SimulationState state;
+        SimulationEvents events;
 
         bool pause_pressed;
         bool step_pressed;
@@ -72,6 +72,7 @@ class SimulationController {
         void update_window_title(GLFWwindow* window);
 
         const SimulationState& get_state() const;
+        const SimulationEvents& get_events() const;
 };
 
 #endif

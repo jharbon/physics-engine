@@ -82,6 +82,9 @@ int main(int argc, char* argv[]) {
         // Check for new events
         renderer.poll_events();
         controller.update_state(renderer.get_window());
+
+        SimulationState state = controller.get_state();
+        SimulationEvents events = controller.get_events();
         
         current = sc::now();
         frame_time = std::chrono::duration<double>(current - last).count();
@@ -92,15 +95,15 @@ int main(int argc, char* argv[]) {
             frame_time = FRAME_TIME_CLAMP;
         }
 
-        if (controller.get_state().is_reset()) {
+        if (events.reset) {
             simulation.reset();
             spdlog::info("Simulation reset");
             accumulator = 0.0;
         }
 
-        if (!controller.get_state().is_paused()) {
+        if (!state.is_paused()) {
             // Scale frame time to control speed of simulation
-            accumulator += frame_time * controller.get_state().get_time_scale();
+            accumulator += frame_time * state.get_time_scale();
 
             while (accumulator >= SIM_DELTA_T) {
                 simulation.step(SIM_DELTA_T);
