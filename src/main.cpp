@@ -37,6 +37,8 @@ constexpr double SIM_DELTA_T = 1.0 / 60.0;  // s - corresponds to 60Hz
 constexpr double FRAME_TIME_CLAMP = 0.25;  // s
 
 int main(int argc, char* argv[]) {
+    spdlog::set_level(spdlog::level::debug);
+
     Renderer renderer(WIN_WIDTH, WIN_HEIGHT);
     spdlog::info("Window renderer created with resolution {}x{}", WIN_WIDTH, WIN_HEIGHT);
 

@@ -1,6 +1,7 @@
 #include <SimulationControl.hpp>
 
 #include <fmt/core.h>
+#include <spdlog/spdlog.h>
 
 #include <stdexcept>
 
@@ -25,23 +26,27 @@ void SimulationState::toggle_pause() {
 }
 
 void SimulationState::half_time_scale() {
+    float old_scale = this->time_scale;
     float new_scale = this->time_scale * 0.5;
-
     if (new_scale >= this->min_time_scale) {
         this->time_scale = new_scale;
+        spdlog::debug("Sim time scale 0.5x: {} -> {}", old_scale, new_scale);
     }
 }
 
 void SimulationState::double_time_scale() {
+    float old_scale = this->time_scale;
     float new_scale = this->time_scale * 2;
-
     if (new_scale <= this->max_time_scale) {
         this->time_scale = new_scale;
+        spdlog::debug("Sim time scale 2x: {} -> {}", old_scale, new_scale);
     }
 }
 
 void SimulationState::reset_time_scale() {
+    float old_scale = this->time_scale;
     this->time_scale = sim_control::DEFAULT_TIME_SCALE;
+    spdlog::debug("Sim time scale reset: {} -> {}", old_scale, this->time_scale);
 }
 
 bool SimulationState::is_paused() const {
@@ -60,6 +65,7 @@ void SimulationController::update_state(GLFWwindow* window) {
     if (glfwGetKey(window, key_bindings::PAUSE) == GLFW_PRESS) {
         if (!this->pause_pressed) {
             this->pause_pressed = true;
+            spdlog::debug("Sim pause pressed");
             this->state.toggle_pause();
         }
     }
@@ -70,6 +76,7 @@ void SimulationController::update_state(GLFWwindow* window) {
     if (glfwGetKey(window, key_bindings::STEP) == GLFW_PRESS) {
         if (!this->step_pressed) {
             this->step_pressed = true;
+            spdlog::debug("Sim step pressed");
             this->events.step = true;
             if (this->state.is_paused()) {
                 // Un-pause to enable simulation to run for single step
@@ -90,6 +97,7 @@ void SimulationController::update_state(GLFWwindow* window) {
     if (glfwGetKey(window, key_bindings::RESET) == GLFW_PRESS) {
         if (!this->reset_pressed) {
             this->reset_pressed = true;
+            spdlog::debug("Sim reset pressed");
             this->events.reset = true;
         }
     }
@@ -101,6 +109,7 @@ void SimulationController::update_state(GLFWwindow* window) {
     if (glfwGetKey(window, key_bindings::HALF_TIME_SCALE) == GLFW_PRESS) {
         if (!this->half_time_pressed && !this->double_time_pressed && !this->reset_time_pressed) {
             this->half_time_pressed = true;
+            spdlog::debug("Sim 0.5x time scale pressed");
             this->state.half_time_scale();
             this->update_window_title(window);
         }
@@ -112,6 +121,7 @@ void SimulationController::update_state(GLFWwindow* window) {
     if (glfwGetKey(window, key_bindings::DOUBLE_TIME_SCALE) == GLFW_PRESS) {
         if (!this->half_time_pressed && !this->double_time_pressed && !this->reset_time_pressed) {
             this->double_time_pressed = true;
+            spdlog::debug("Sim 2x time scale pressed");
             this->state.double_time_scale();
             this->update_window_title(window);
         }
@@ -123,6 +133,7 @@ void SimulationController::update_state(GLFWwindow* window) {
     if (glfwGetKey(window, key_bindings::RESET_TIME_SCALE) == GLFW_PRESS) {
         if (!this->half_time_pressed && !this->double_time_pressed && !this->reset_time_pressed) {
             this->reset_time_pressed = true;
+            spdlog::debug("Sim reset time scale pressed");
             this->state.reset_time_scale();
             this->update_window_title(window);
         }
