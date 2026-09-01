@@ -107,6 +107,18 @@ void SimulationController::update(GLFWwindow* window) {
         this->reset_pressed = false;
     }
 
+    this->events.spawn_particle = false;
+    if (glfwGetKey(window, key_bindings::SPAWN_PARTICLE) == GLFW_PRESS) {
+        if (!this->spawn_particle_pressed) {
+            this->spawn_particle_pressed = true;
+            spdlog::debug("Spawn particle pressed");
+            this->events.spawn_particle = true;
+        }
+    }
+    else {
+        this->spawn_particle_pressed = false;
+    }
+
     if (glfwGetKey(window, key_bindings::HALF_TIME_SCALE) == GLFW_PRESS) {
         if (!this->half_time_pressed && !this->double_time_pressed && !this->reset_time_pressed) {
             this->half_time_pressed = true;

@@ -18,6 +18,7 @@ namespace key_bindings {
     constexpr int HALF_TIME_SCALE = GLFW_KEY_COMMA;
     constexpr int DOUBLE_TIME_SCALE = GLFW_KEY_PERIOD;
     constexpr int RESET_TIME_SCALE = GLFW_KEY_SLASH;
+    constexpr int SPAWN_PARTICLE = GLFW_KEY_S;
 }
 
 class SimulationState {
@@ -51,6 +52,7 @@ class SimulationState {
 struct SimulationEvents {
     bool reset_sim = false;
     bool step = false;
+    bool spawn_particle = false;
 };
 
 class SimulationController {
@@ -64,6 +66,7 @@ class SimulationController {
         bool half_time_pressed;
         bool double_time_pressed;
         bool reset_time_pressed;
+        bool spawn_particle_pressed;
 
     public:
         SimulationController(bool paused = false, bool step = false);

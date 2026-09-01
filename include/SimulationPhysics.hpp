@@ -51,6 +51,7 @@ class SimulationPhysics {
 
         void step(float delta_t);
         void reset();
+        void spawn_particle(const Particle& p);
 
         const Particle& get_particle(size_t i) const;
         const std::vector<Particle>& get_all_particles() const;

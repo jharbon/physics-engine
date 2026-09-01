@@ -87,6 +87,22 @@ int main(int argc, char* argv[]) {
 
         SimulationState state = controller.get_state();
         SimulationEvents events = controller.get_events();
+
+        if (events.spawn_particle) {
+            std::size_t old_particle_count = simulation.get_num_particles();
+            simulation.spawn_particle(generate_particle(
+                MIN_RADIUS,
+                MAX_RADIUS,
+                bounds.right - bounds.left,
+                bounds.top - bounds.bottom,
+                DENSITY,
+                bounds,
+                MIN_VEL,
+                MAX_VEL,
+                rng
+            ));
+            spdlog::info("Particle spawned: {} -> {} total particles", old_particle_count, simulation.get_num_particles());
+        }
         
         current = sc::now();
         frame_time = std::chrono::duration<double>(current - last).count();

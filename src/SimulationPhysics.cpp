@@ -84,6 +84,10 @@ void SimulationPhysics::reset() {
     this->stats = {0, 0, 0, 0, 0};
 }
 
+void SimulationPhysics::spawn_particle(const Particle& p) {
+    this->particles.push_back(p);
+}
+
 const Particle& SimulationPhysics::get_particle(size_t i) const {
     return this->particles.at(i);
 }
