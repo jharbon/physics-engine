@@ -83,7 +83,7 @@ int main(int argc, char* argv[]) {
     while (!renderer.should_close()) {
         // Check for new events
         renderer.poll_events();
-        controller.update_state(renderer.get_window());
+        controller.update(renderer.get_window());
 
         SimulationState state = controller.get_state();
         SimulationEvents events = controller.get_events();
@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
             frame_time = FRAME_TIME_CLAMP;
         }
 
-        if (events.reset) {
+        if (events.reset_sim) {
             simulation.reset();
             spdlog::info("Simulation reset");
             accumulator = 0.0;

@@ -49,7 +49,7 @@ class SimulationState {
 };
 
 struct SimulationEvents {
-    bool reset = false;
+    bool reset_sim = false;
     bool step = false;
 };
 
@@ -68,9 +68,9 @@ class SimulationController {
     public:
         SimulationController(bool paused = false, bool step = false);
 
-        void update_state(GLFWwindow* window);
+        void update(GLFWwindow* window);
         void update_window_title(GLFWwindow* window);
-
+    
         const SimulationState& get_state() const;
         const SimulationEvents& get_events() const;
 };

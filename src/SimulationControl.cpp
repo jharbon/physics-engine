@@ -61,7 +61,7 @@ SimulationController::SimulationController(bool paused, bool step)
         : state{paused, step}, pause_pressed{false}, step_pressed{false}, reset_pressed{false},
           half_time_pressed{false}, double_time_pressed{false}, reset_time_pressed{false} {}
 
-void SimulationController::update_state(GLFWwindow* window) {
+void SimulationController::update(GLFWwindow* window) {
     if (glfwGetKey(window, key_bindings::PAUSE) == GLFW_PRESS) {
         if (!this->pause_pressed) {
             this->pause_pressed = true;
@@ -94,16 +94,17 @@ void SimulationController::update_state(GLFWwindow* window) {
 
     }
 
+    // Set event to false here to ensure single occurrence for a given key press
+    this->events.reset_sim = false;
     if (glfwGetKey(window, key_bindings::RESET) == GLFW_PRESS) {
         if (!this->reset_pressed) {
             this->reset_pressed = true;
             spdlog::debug("Sim reset pressed");
-            this->events.reset = true;
+            this->events.reset_sim = true;
         }
     }
     else {
         this->reset_pressed = false;
-        this->events.reset = false;
     }
 
     if (glfwGetKey(window, key_bindings::HALF_TIME_SCALE) == GLFW_PRESS) {
