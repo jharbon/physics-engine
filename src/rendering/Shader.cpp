@@ -1,7 +1,7 @@
 #include <glad/glad.h>
 #include <fmt/core.h>
 
-#include <Shader.hpp>
+#include <rendering/Shader.hpp>
 
 #include <iostream>
 #include <stdexcept>

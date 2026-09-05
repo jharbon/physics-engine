@@ -4,8 +4,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include <Shader.hpp>
-#include <Particle.hpp>
+#include <rendering/Shader.hpp>
+#include <particles/Particle.hpp>
 
 #include <memory>
 #include <vector>

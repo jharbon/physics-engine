@@ -14,29 +14,29 @@ include_directories(
 )
 
 add_executable(physics_engine
-    src/main.cpp
-    src/glad.c
-    src/Shader.cpp
-    src/Renderer.cpp
-    src/math_utils.cpp
-    src/sim_utils.cpp
-    src/SimulationPhysics.cpp
-    src/SimulationControl.cpp
-    src/Vec2.cpp
-    src/Particle.cpp
-    src/collision.cpp
+    src/core/main.cpp
+    src/glad/glad.c
+    src/rendering/Shader.cpp
+    src/rendering/Renderer.cpp
+    src/math/utils.cpp
+    src/particles/utils.cpp
+    src/physics/SimulationPhysics.cpp
+    src/input/SimulationControl.cpp
+    src/math/Vec2.cpp
+    src/particles/Particle.cpp
+    src/collision/collision.cpp
 )
 
 add_executable(test_vec2
     tests/test_vec2.cpp
-    src/Vec2.cpp
+    src/math/Vec2.cpp
 )
 
 add_executable(test_collision
     tests/test_collision.cpp
-    src/collision.cpp
-    src/Vec2.cpp
-    src/Particle.cpp
+    src/collision/collision.cpp
+    src/math/Vec2.cpp
+    src/particles/Particle.cpp
 )
 
 enable_testing()

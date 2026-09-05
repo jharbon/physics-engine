@@ -1,4 +1,4 @@
-#include <math_utils.hpp>
+#include <math/utils.hpp>
 
 RandomNumberGenerator::RandomNumberGenerator(uint32_t seed) 
         : mt_engine(seed) {}

@@ -1,7 +1,7 @@
 #ifndef SIMULATION_PHYSICS_HPP
 #define SIMULATION_PHYSICS_HPP
 
-#include <Particle.hpp>
+#include <particles/Particle.hpp>
 
 #include <iostream>
 #include <vector>

@@ -1,10 +1,10 @@
-#include <Renderer.hpp>
-#include <Particle.hpp>
-#include <Vec2.hpp>
-#include <math_utils.hpp>
-#include <sim_utils.hpp>
-#include <SimulationPhysics.hpp>
-#include <SimulationControl.hpp>
+#include <rendering/Renderer.hpp>
+#include <particles/Particle.hpp>
+#include <math/Vec2.hpp>
+#include <math/utils.hpp>
+#include <particles/utils.hpp>
+#include <physics/SimulationPhysics.hpp>
+#include <input/SimulationControl.hpp>
 
 #include <spdlog/spdlog.h>
 

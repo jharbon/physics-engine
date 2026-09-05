@@ -1,7 +1,7 @@
 #ifndef COLLISION_HPP
 #define COLLISION_HPP
 
-#include <Particle.hpp>
+#include <particles/Particle.hpp>
 
 #include <utility>
 

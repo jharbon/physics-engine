@@ -1,4 +1,5 @@
-#include <Vec2.hpp>
+#include <math/Vec2.hpp>
+
 #include <sstream>
 #include <stdexcept>
 #include <cmath>

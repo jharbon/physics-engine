@@ -1,10 +1,10 @@
 #ifndef SIM_UTILS_HPP
 #define SIM_UTILS_HPP
 
-#include <Particle.hpp>
-#include <SimulationPhysics.hpp>
-#include <Vec2.hpp>
-#include <math_utils.hpp>
+#include <particles/Particle.hpp>
+#include <physics/SimulationPhysics.hpp>
+#include <math/Vec2.hpp>
+#include <math/utils.hpp>
 
 #include <vector>
 

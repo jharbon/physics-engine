@@ -1,5 +1,5 @@
-#include <SimulationPhysics.hpp>
-#include <collision.hpp>
+#include <physics/SimulationPhysics.hpp>
+#include <collision/collision.hpp>
 
 #include <stdexcept>
 #include <sstream>

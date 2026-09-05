@@ -1,6 +1,6 @@
-#include <collision.hpp>
-#include <Particle.hpp>
-#include <Vec2.hpp>
+#include <collision/collision.hpp>
+#include <particles/Particle.hpp>
+#include <math/Vec2.hpp>
 #include <helpers.hpp>
 
 #include <cassert>

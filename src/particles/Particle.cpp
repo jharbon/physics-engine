@@ -1,4 +1,5 @@
-#include <Particle.hpp>
+#include <particles/Particle.hpp>
+
 #include <cmath>
 
 Particle::Particle(

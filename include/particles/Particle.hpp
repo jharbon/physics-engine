@@ -1,7 +1,7 @@
 #ifndef PARTICLE_HPP
 #define PARTICLE_HPP
 
-#include <Vec2.hpp>
+#include <math/Vec2.hpp>
 
 class Particle {
     private:
